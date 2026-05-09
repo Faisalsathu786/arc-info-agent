@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ArcInfoAgent — Ask About Arc Network</title>
+  <meta http-equiv="Content-Security-Policy" content="frame-src https://app.dynamicauth.com 'self';">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0a0a0f;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+    .container { max-width: 600px; width: 100%; }
+    .header { text-align: center; margin-bottom: 40px; }
+    .logo { font-size: 48px; margin-bottom: 12px; }
+    h1 { font-size: 28px; font-weight: 700; color: #fff; }
+    h1 span { color: #7c5cfc; }
+    .subtitle { color: #888; margin-top: 8px; font-size: 14px; }
+    .badge {
+      display: inline-block;
+      background: #1a1a2e;
+      border: 1px solid #7c5cfc;
+      color: #7c5cfc;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin-top: 10px;
+    }
+    .card {
+      background: #111118;
+      border: 1px solid #222;
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+    .wallet-section { text-align: center; }
+    .btn {
+      background: #7c5cfc;
+      color: #fff;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.2s;
+    }
+    .btn:hover { background: #6a4de0; }
+    .btn:disabled { background: #333; cursor: not-allowed; color: #666; }
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid #7c5cfc;
+      color: #7c5cfc;
+    }
+    .btn-secondary:hover { background: #1a1230; }
+    .wallet-info {
+      background: #0d1117;
+      border: 1px solid #2a2a3a;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #aaa;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; flex-shrink: 0; }
+    .dot.red { background: #ef4444; }
+    label { display: block; font-size: 13px; color: #888; margin-bottom: 8px; }
+    textarea {
+      width: 100%;
+      background: #0d1117;
+      border: 1px solid #2a2a3a;
+      border-radius: 10px;
+      color: #e0e0e0;
+      font-size: 15px;
+      padding: 14px;
+      resize: vertical;
+      min-height: 100px;
+      font-family: inherit;
+      transition: border 0.2s;
+    }
+    textarea:focus { outline: none; border-color: #7c5cfc; }
+    .fee-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0d1117;
+      border: 1px solid #2a2a3a;
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin: 14px 0;
+      font-size: 13px;
+    }
+    .fee-info .fee-label { color: #888; }
+    .fee-info .fee-value { color: #22c55e; font-weight: 600; }
+    .status-box {
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 13px;
+      margin-top: 14px;
+      display: none;
+    }
+    .status-box.loading { background: #1a1230; border: 1px solid #7c5cfc; color: #a78bfa; }
+    .status-box.success { background: #0a2010; border: 1px solid #22c55e; color: #4ade80; }
+    .status-box.error { background: #200a0a; border: 1px solid #ef4444; color: #f87171; }
+    .tx-link { color: #7c5cfc; text-decoration: none; word-break: break-all; }
+    .tx-link:hover { text-decoration: underline; }
+    .log-section h3 { font-size: 15px; color: #fff; margin-bottom: 14px; }
+    .log-item {
+      background: #0d1117;
+      border: 1px solid #1a1a2a;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+    .log-item .q-id { color: #7c5cfc; font-weight: 600; margin-bottom: 4px; }
+    .log-item .q-text { color: #ccc; margin-bottom: 4px; }
+    .log-item .q-addr { color: #555; font-size: 11px; }
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background: #111118;
+      border: 1px solid #222;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+    .stat-value { font-size: 24px; font-weight: 700; color: #7c5cfc; }
+    .stat-label { font-size: 12px; color: #666; margin-top: 4px; }
+    .footer { text-align: center; color: #444; font-size: 12px; margin-top: 30px; }
+    .footer a { color: #7c5cfc; text-decoration: none; }
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid #7c5cfc;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #addNetworkBtn { margin-top: 10px; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="logo">🤖</div>
+    <h1>Arc<span>InfoAgent</span></h1>
+    <p class="subtitle">Ask anything about Arc Network — powered by blockchain</p>
+    <span class="badge">⚡ Arc Testnet · USDC Gas</span>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-value" id="totalQueries">—</div>
+      <div class="stat-label">Total Queries</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="vaultBalance">—</div>
+      <div class="stat-label">Vault (USDC)</div>
+    </div>
+  </div>
+
+  <!-- Wallet -->
+  <div class="card">
+    <div class="wallet-section" id="connectSection">
+      <p style="color:#888; margin-bottom:16px; font-size:14px;">Connect your wallet to ask a question</p>
+      <button class="btn" onclick="connectWallet()">🦊 Connect Wallet (MetaMask)</button>
+      <button class="btn btn-secondary" id="addNetworkBtn" onclick="addArcNetwork()" style="margin-top:10px">➕ Add Arc Testnet</button>
+    </div>
+    <div id="connectedSection" style="display:none">
+      <div class="wallet-info">
+        <div class="dot"></div>
+        <span id="walletAddr">Connected</span>
+      </div>
+      <button class="btn btn-secondary" onclick="disconnectWallet()">Disconnect</button>
+    </div>
+  </div>
+
+  <!-- Ask Form -->
+  <div class="card" id="askCard" style="display:none">
+    <label>Your Question about Arc Network</label>
+    <textarea id="questionInput" placeholder="e.g. What is Arc Network? How does USDC gas work? What is ERC-8004?"></textarea>
+    <div class="fee-info">
+      <span class="fee-label">Query Fee</span>
+      <span class="fee-value">0.001 USDC</span>
+    </div>
+    <button class="btn" onclick="askQuestion()" id="askBtn">⚡ Ask Question (0.001 USDC)</button>
+    <div class="status-box" id="statusBox"></div>
+  </div>
+
+  <!-- Query Log -->
+  <div class="card log-section">
+    <h3>📋 Recent Queries (Onchain)</h3>
+    <div id="queryLog">
+      <p style="color:#555; font-size:13px; text-align:center; padding:20px">Connect wallet to load queries</p>
+    </div>
+  </div>
+
+  <div class="footer">
+    Contract: <a href="https://testnet.arcscan.app/address/0x110eF8AbFA3a5dD4C7e05Fa0521d96Ea04940cb2" target="_blank">0x110eF8Ab...40cb2</a>
+    · Built on <a href="https://arc.network" target="_blank">Arc Network</a>
+    · <a href="https://testnet.arcscan.app/address/0x110eF8AbFA3a5dD4C7e05Fa0521d96Ea04940cb2" target="_blank">View Explorer</a>
+  </div>
+
+</div>
+
+<script>
+const CONTRACT_ADDRESS = "0x110eF8AbFA3a5dD4C7e05Fa0521d96Ea04940cb2";
+const ARC_CHAIN_ID = "0x4CEF52";
+const RPC_URL = "https://rpc.testnet.arc.network";
+const EXPLORER = "https://testnet.arcscan.app";
+const QUERY_FEE = "0x38D7EA4C68000"; // 0.001 USDC in wei (1000000000000000)
+
+// ABI - only what we need
+const ABI = [
+  "function askQuestion(string memory question) public payable",
+  "function totalQueries() public view returns (uint256)",
+  "function getBalance() public view returns (uint256)",
+  "event QuerySubmitted(address indexed user, string question, uint256 queryId)"
+];
+
+let account = null;
+
+// Encode function call manually (no ethers.js needed)
+function encodeFunctionCall(question) {
+  // askQuestion(string) selector = keccak256 first 4 bytes
+  const selector = "0x602bdec8";
+  // encode string: offset (32), length, data padded to 32 bytes
+  const offset = "0000000000000000000000000000000000000000000000000000000000000020";
+  const bytes = new TextEncoder().encode(question);
+  const len = bytes.length.toString(16).padStart(64, '0');
+  let hex = '';
+  for (let b of bytes) hex += b.toString(16).padStart(2, '0');
+  const padded = hex.padEnd(Math.ceil(hex.length / 64) * 64, '0');
+  return selector + offset + len + padded;
+}
+
+function decodeUint256(hex) {
+  return parseInt(hex, 16);
+}
+
+async function rpcCall(method, params) {
+  const res = await fetch(RPC_URL, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({jsonrpc: '2.0', method, params, id: 1})
+  });
+  const data = await res.json();
+  return data.result;
+}
+
+async function loadStats() {
+  try {
+    // totalQueries()
+    const tqResult = await rpcCall('eth_call', [{
+      to: CONTRACT_ADDRESS,
+      data: '0x8da5cb5b' // totalQueries selector
+    }, 'latest']);
+
+    // Actually use correct selector
+    const tqData = await rpcCall('eth_call', [{
+      to: CONTRACT_ADDRESS,
+      data: '0xfdd26881' // totalQueries()
+    }, 'latest']);
+
+    const balData = await rpcCall('eth_call', [{
+      to: CONTRACT_ADDRESS,
+      data: '0x12065fe0' // getBalance()
+    }, 'latest']);
+
+    const tq = tqData && tqData !== '0x' ? decodeUint256(tqData.slice(2)) : 0;
+    const bal = balData && balData !== '0x' ? decodeUint256(balData.slice(2)) : 0;
+
+    document.getElementById('totalQueries').textContent = tq;
+    document.getElementById('vaultBalance').textContent = (bal / 1e18).toFixed(4);
+  } catch(e) {
+    console.error('Stats error:', e);
+  }
+}
+
+async function addArcNetwork() {
+  if (!window.ethereum) { alert('MetaMask install karo pehle!'); return; }
+  try {
+    await window.ethereum.request({
+      method: 'wallet_addEthereumChain',
+      params: [{
+        chainId: ARC_CHAIN_ID,
+        chainName: 'Arc Testnet',
+        nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: 18 },
+        rpcUrls: [RPC_URL],
+        blockExplorerUrls: [EXPLORER]
+      }]
+    });
+    alert('Arc Testnet added! ✅');
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+async function connectWallet() {
+  if (!window.ethereum) {
+    alert('MetaMask install karo: https://metamask.io');
+    return;
+  }
+  try {
+    // Add Arc network first
+    try {
+      await window.ethereum.request({
+        method: 'wallet_addEthereumChain',
+        params: [{
+          chainId: ARC_CHAIN_ID,
+          chainName: 'Arc Testnet',
+          nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: 18 },
+          rpcUrls: [RPC_URL],
+          blockExplorerUrls: [EXPLORER]
+        }]
+      });
+    } catch(e) {}
+
+    // Switch to Arc
+    try {
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: ARC_CHAIN_ID }]
+      });
+    } catch(e) {}
+
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    account = accounts[0];
+    showConnected();
+    loadStats();
+    loadQueryLog();
+  } catch(e) {
+    alert('Wallet connect failed: ' + e.message);
+  }
+}
+
+function showConnected() {
+  document.getElementById('connectSection').style.display = 'none';
+  document.getElementById('connectedSection').style.display = 'block';
+  document.getElementById('walletAddr').textContent =
+    account.slice(0, 6) + '...' + account.slice(-4) + ' ✅';
+  document.getElementById('askCard').style.display = 'block';
+}
+
+function disconnectWallet() {
+  account = null;
+  document.getElementById('connectSection').style.display = 'block';
+  document.getElementById('connectedSection').style.display = 'none';
+  document.getElementById('askCard').style.display = 'none';
+}
+
+async function askQuestion() {
+  const q = document.getElementById('questionInput').value.trim();
+  if (!q) { alert('Question likhna zaroor hai!'); return; }
+  if (!account) { alert('Pehle wallet connect karo!'); return; }
+
+  const btn = document.getElementById('askBtn');
+  const statusBox = document.getElementById('statusBox');
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Processing...';
+  statusBox.style.display = 'block';
+  statusBox.className = 'status-box loading';
+  statusBox.innerHTML = '<span class="spinner"></span> Transaction submit ho rahi hai...';
+
+  try {
+    const data = encodeFunctionCall(q);
+    const txHash = await window.ethereum.request({
+      method: 'eth_sendTransaction',
+      params: [{
+        from: account,
+        to: CONTRACT_ADDRESS,
+        value: QUERY_FEE,
+        data: data,
+        gas: '0x30000'
+      }]
+    });
+
+    statusBox.className = 'status-box success';
+    statusBox.innerHTML = `✅ Question submitted onchain!<br><br>
+      <a class="tx-link" href="${EXPLORER}/tx/${txHash}" target="_blank">
+        View TX: ${txHash.slice(0,10)}...${txHash.slice(-8)}
+      </a>`;
+
+    document.getElementById('questionInput').value = '';
+    setTimeout(() => { loadStats(); loadQueryLog(); }, 3000);
+
+  } catch(e) {
+    statusBox.className = 'status-box error';
+    statusBox.innerHTML = '❌ Error: ' + (e.message || 'Transaction failed');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '⚡ Ask Question (0.001 USDC)';
+}
+
+async function loadQueryLog() {
+  const logDiv = document.getElementById('queryLog');
+  logDiv.innerHTML = '<p style="color:#555; font-size:13px; text-align:center">Loading onchain queries...</p>';
+
+  try {
+    // Get QuerySubmitted events
+    const logs = await rpcCall('eth_getLogs', [{
+      address: CONTRACT_ADDRESS,
+      fromBlock: '0x0',
+      toBlock: 'latest',
+      topics: ['0x57812dd163aa0abf3a7249c015d0057553f30721e23f8804e30cff23bfc5dd86']
+    }]);
+
+    if (!logs || logs.length === 0) {
+      logDiv.innerHTML = '<p style="color:#555; font-size:13px; text-align:center">No queries yet — be the first!</p>';
+      return;
+    }
+
+    let html = '';
+    const recent = logs.slice(-5).reverse();
+    for (const log of recent) {
+      const user = '0x' + log.topics[1].slice(26);
+      // Decode question from data
+      let question = '(question)';
+      try {
+        const data = log.data.slice(2);
+        const offset = parseInt(data.slice(0, 64), 16) * 2;
+        const strLen = parseInt(data.slice(offset, offset + 64), 16) * 2;
+        const strHex = data.slice(offset + 64, offset + 64 + strLen);
+        question = new TextDecoder().decode(
+          new Uint8Array(strHex.match(/.{2}/g).map(b => parseInt(b, 16)))
+        );
+      } catch(e) {}
+      const queryId = parseInt(log.topics[2] || '0x1', 16);
+      const shortUser = user.slice(0,6) + '...' + user.slice(-4);
+
+      html += `<div class="log-item">
+        <div class="q-id">#${queryId}</div>
+        <div class="q-text">${question}</div>
+        <div class="q-addr">${shortUser}</div>
+      </div>`;
+    }
+    logDiv.innerHTML = html;
+  } catch(e) {
+    logDiv.innerHTML = '<p style="color:#555; font-size:13px; text-align:center">Could not load queries</p>';
+  }
+}
+
+// Load stats on page load
+loadStats();
+</script>
+</body>
+</html>
