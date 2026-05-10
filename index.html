@@ -535,8 +535,9 @@ function encodeGetLeaderboard(limit) {
 }
 
 function encodeUserPoints(address) {
+  // userPoints(address) selector = 0x85ba7fc3
   // userPoints(address) selector
-  const selector = "0x2f5bc0e5";
+  const selector = "0x85ba7fc3";
   const addrHex = address.slice(2).toLowerCase().padStart(64, '0');
   return selector + addrHex;
 }
@@ -598,7 +599,7 @@ function disconnectWallet() {
 async function loadUserPoints() {
   if (!account) return;
   try {
-    const data = await rpcCall('eth_call', [{ to: CONTRACT_ADDRESS, data: '0xc14c4f43' + account.slice(2).toLowerCase().padStart(64,'0') }, 'latest']);
+    const data = await rpcCall('eth_call', [{ to: CONTRACT_ADDRESS, data: encodeUserPoints(account) }, 'latest']);
     const pts = decodeUint256(data);
     document.getElementById('userPointsDisplay').textContent = pts + ' ⭐';
   } catch(e) {}
@@ -664,7 +665,7 @@ async function askQuestion() {
       }
       loadQueryLog();
       loadHomeStats();
-    }, 6000);
+    }, 4000);
 
     await getAIAnswer(q);
     document.getElementById('questionInput').value = '';
